@@ -1,0 +1,51 @@
+services:
+  rabbitmq:
+    image: "rabbitmq"
+    networks:
+      - nameko_net
+    environment:
+      - RABBITMQ_DEFAULT_USER=rabbitmq_admin
+      - RABBITMQ_DEFAULT_PASS=admin1234
+
+  user-service:
+    build: "./microservice-user/"
+    networks:
+      - nameko_net
+    environment:
+      - nameko_username=rabbitmq_admin
+      - nameko_password=admin1234
+      - nameko_host=rabbitmq
+    depends_on:
+      - rabbitmq
+    restart: always
+
+  book-service:
+    build: "./microservice-book/"
+    networks:
+      - nameko_net
+    environment:
+      - nameko_username=rabbitmq_admin
+      - nameko_password=admin1234
+      - nameko_host=rabbitmq
+    depends_on:
+      - rabbitmq
+    restart: always
+
+  web-service:
+    build: "./web-service/"
+    depends_on:
+      - book-service
+      - user-service
+    ports:
+      - "5000:5000"
+    networks:
+      - nameko_net
+    environment:
+      - nameko_username=rabbitmq_admin
+      - nameko_password=admin1234
+      - nameko_host=rabbitmq
+    restart: always
+
+networks:
+  nameko_net:
+    driver: bridge
